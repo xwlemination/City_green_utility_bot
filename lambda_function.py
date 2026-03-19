@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     
     # REACH INTO S3 (Requirement #4)
     # Replace 'citygreen-outage-data-2026' with your actual bucket name
-    bucket_name = citygreen-outage-data-eina-961341532793-us-east-1-an
+    bucket_name = 'citygreen-outage-data-eina-961341532793-us-east-1-an'
     
     try:
         response = s3.get_object(Bucket=bucket_name, Key='outages.json')
