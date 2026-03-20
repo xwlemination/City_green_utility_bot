@@ -8,7 +8,7 @@ def lambda_handler(event, context):
     # Get the ZIP from the Contact Flow attributes
     # Connect sends this under Details -> ContactData -> Attributes
     attr = event.get('Details', {}).get('ContactData', {}).get('Attributes', {})
-    user_zip = attr.get('service_zip', '00000') 
+    user_zip = attr.get('service_zip', '90210') 
     
     # REACH INTO S3 (Requirement #4)
     # Replace 'citygreen-outage-data-2026' with your actual bucket name
