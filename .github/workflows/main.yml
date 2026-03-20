@@ -29,4 +29,6 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: city_green_utility_bot
         IMAGE_TAG: latest
-        
+        run: 
+        docker build -t $CER_REGISTRY/$CERREPOSITORY: $IMAGE_TAG.
+        docker push $ECR_REGISTRY/$CERREPOSITORY:$IMAGE_TAG
