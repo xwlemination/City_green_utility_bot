@@ -1,30 +1,38 @@
-import json
 import boto3
 import os
+from flask import Flask, jsonify
 
+# 1. Initialize the Web Server
+app = Flask(__name__)
 s3 = boto3.client('s3')
 
-def lambda_handler(event, context):
-    # Get the ZIP from the Contact Flow attributes
-    # Connect sends this under Details -> ContactData -> Attributes
-    attr = event.get('Details', {}).get('ContactData', {}).get('Attributes', {})
-    user_zip = attr.get('service_zip', '90210') 
-    
-    # REACH INTO S3 (Requirement #4)
-    # Replace 'citygreen-outage-data-2026' with your actual bucket name
-    bucket_name = 'citygreen-outage-data-eina-961341532793-us-east-1-an'
-    
+# 2. Get the bucket name from your App Runner Environment Variables
+BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+
+@app.route('/')
+def dashboard():
+    """
+    This is the main page supervisors will see. 
+    It replaces the 'lambda_handler' and keeps the app running.
+    """
     try:
-        response = s3.get_object(Bucket=bucket_name, Key='outages.json')
-        outage_map = json.loads(response['Body'].read().decode('utf-8'))
-        # If zip is in the file and set to "true", there is an outage
-        is_outage = outage_map.get(user_zip, "false")
-    except Exception as e:
-        print(f"Error reading S3: {e}")
-        is_outage = "false"
+        # This keeps your original logic of checking S3 for outage data
+        # Adjust 'outages.json' if your filename is different in S3
+        response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
+        data = response['Body'].read().decode('utf-8')
+        
+        # This sends the data to the browser for the supervisor to see
+        return f"<h1>CityGreen Supervisor Dashboard</h1><pre>{data}</pre>"
     
-    # Return attributes back to the Amazon Connect Flow
-    return {
-        "outage_status": is_outage,
-        "retention_risk": "false" 
-    }
+    except Exception as e:
+        return f"<h1>Dashboard Error</h1><p>Check S3 connection: {str(e)}</p>", 500
+
+@app.route('/health')
+def health_check():
+    """Tells AWS the app is alive so it doesn't shut down."""
+    return "OK", 200
+
+# 3. The 'Listener' that makes App Runner work
+if __name__ == "__main__":
+    # This MUST be 0.0.0.0 and port 8080 to match your AWS settings
+    app.run(host='0.0.0.0', port=8080)
