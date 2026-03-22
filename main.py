@@ -1,30 +1,50 @@
 import boto3
 import os
-from flask import Flask
+import json
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 s3 = boto3.client('s3')
 
-# Pulls your bucket name from the AWS environment variable you set
-BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+# HARDCODED BUCKET NAME from your Screenshot 469
+BUCKET_NAME = 'citygreen-outage-data-eina-961341532793-us-east-1-an'
 
 @app.route('/')
 def dashboard():
+    """DASHBOARD: Shows all outages in S3 for supervisors."""
     try:
-        # Reaches into S3 to get the outage data
         response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
         data = response['Body'].read().decode('utf-8')
-        
-        # Shows the data to the supervisor
         return f"<h1>CityGreen Supervisor Dashboard</h1><pre>{data}</pre>"
-    
     except Exception as e:
-        return f"<h1>Dashboard Connection Error</h1><p>{str(e)}</p>", 500
+        return f"<h1>Dashboard Error</h1><p>Check S3: {str(e)}</p>", 500
+
+@app.route('/check_outage', methods=['POST'])
+def check_outage():
+    """REPORTING: This handles the ZIP code checks for the bot."""
+    try:
+        content = request.json
+        # Default to 90210 if no ZIP is provided
+        user_zip = content.get('service_zip', '90210')
+
+        response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
+        outage_map = json.loads(response['Body'].read().decode('utf-8'))
+
+        # Check if the ZIP is in the file
+        is_outage = outage_map.get(user_zip, "false")
+
+        return jsonify({
+            "outage_status": is_outage,
+            "service_zip": user_zip
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/health')
 def health():
+    """Health check for App Runner deployment."""
     return "OK", 200
 
-# This is the part that was broken in your screenshot—it needs double underscores
 if __name__ == "__main__":
+    # Fixed syntax with double underscores for Port 8080
     app.run(host='0.0.0.0', port=8080)
