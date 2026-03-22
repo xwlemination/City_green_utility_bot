@@ -20,7 +20,7 @@ def dashboard():
 
 @app.route('/check_outage', methods=['POST'])
 def check_outage():
-    """REPORTING: Handles ZIP code checks."""
+    """REPORTING: Handles ZIP code checks for the bot."""
     try:
         content = request.json
         user_zip = content.get('service_zip', '90210')
