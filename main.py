@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 s3 = boto3.client('s3')
 
-# Hardcoded from your Screenshot 469
+# Direct bucket name for CityGreen Utility
 BUCKET_NAME = 'citygreen-outage-data-eina-961341532793-us-east-1-an'
 
 @app.route('/')
@@ -45,5 +45,5 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    # Fixed with double underscores for Port 8080
+    # Correct Python syntax for starting the server
     app.run(host='0.0.0.0', port=8080)
