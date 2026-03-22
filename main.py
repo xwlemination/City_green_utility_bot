@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 s3 = boto3.client('s3')
 
-# HARDCODED BUCKET NAME from your Screenshot 469
+# Hardcoded from your Screenshot 469
 BUCKET_NAME = 'citygreen-outage-data-eina-961341532793-us-east-1-an'
 
 @app.route('/')
@@ -21,10 +21,9 @@ def dashboard():
 
 @app.route('/check_outage', methods=['POST'])
 def check_outage():
-    """REPORTING: This handles the ZIP code checks for the bot."""
+    """REPORTING: Handles ZIP code checks for the whole system."""
     try:
         content = request.json
-        # Default to 90210 if no ZIP is provided
         user_zip = content.get('service_zip', '90210')
 
         response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
@@ -46,5 +45,5 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    # Fixed syntax with double underscores for Port 8080
+    # Fixed with double underscores for Port 8080
     app.run(host='0.0.0.0', port=8080)
