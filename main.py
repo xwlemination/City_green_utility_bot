@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # THIS IS THE PART AWS NEEDS TO SEE
-@app.route('/health')
+@app.route(/health)
 def health_check():
     return "OK", 200
 
