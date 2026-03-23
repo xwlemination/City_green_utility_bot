@@ -1,3 +1,5 @@
+import os 
+os.system ("python3 -m pip install flask")
 import flask
 import json
 
