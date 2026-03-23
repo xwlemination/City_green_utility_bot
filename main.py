@@ -1,6 +1,3 @@
-import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host='0.0.0.0', port=port)
 import flask
 import json
 
@@ -39,3 +36,5 @@ def outage_check():
         err = {"messages": [{"contentType": "PlainText", "content": "Error."}]}
         return flask.Response(json.dumps(err), mimetype='application/json')
 
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
