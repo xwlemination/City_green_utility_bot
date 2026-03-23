@@ -1,4 +1,4 @@
-FROM python3:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,4 +10,4 @@ RUN pip3 install flask
 # This tells App Runner to listen on the correct port
 EXPOSE 8080
 
-CMD ["python3", "main.py"]
+CMD ["python", "main.py"]
