@@ -1,3 +1,4 @@
+import os
 import boto3
 import json
 from flask import Flask, request, jsonify
@@ -5,62 +6,51 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 s3 = boto3.client('s3')
 
-BUCKET_NAME = 'citygreen-outage-data-eina-961341532793-us-east-1-am'
+# Replace with your actual bucket name
+BUCKET_NAME = 'citygreen-outage-data-eina' 
 
-@app.route('/')
-def dashboard():
+@app.route('/', methods=['POST'])
+def handle_lex():
+    data = request.get_json()
+    
+    # 1. Grab the ZIP from the Lex V2 slot
+    try:
+        slots = data['sessionState']['intent']['slots']
+        user_zip = slots['zip_code']['value']['interpretedValue']
+    except (KeyError, TypeError):
+        user_zip = "Unknown"
+
+    # 2. Fetch the outage data from S3
     try:
         response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
-        data = response['Body'].read().decode('utf-8')
-        return f"<h1>CityGreen Supervisor Dashboard</h1><pre>{data}</pre>"
+        outages = json.loads(response['Body'].read().decode('utf-8'))
+        
+        # Check if the zip has an outage
+        has_outage = outages.get(user_zip, False)
+        status_text = "there IS an active outage" if has_outage else "there are no active outages"
     except Exception as e:
-        return f"<h1>Dashboard Error</h1><p>{str(e)}</p>", 500
+        print(f"Error: {e}")
+        status_text = "we are having trouble checking our system right now"
 
-@app.route('/check_outage', methods=['POST'])
-def check_outage():
-    try:
-        content = request.json
-        # Pull the ZIP from the Lex V2 slot structure
-        slots = content.get('sessionState', {}).get('intent', {}).get('slots', {})
-        user_zip_data = slots.get('service_zip') or {}
-        user_zip = user_zip_data.get('value', {}).get('interpretedValue', '90210')
-
-        # Pull from S3
-        response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
-        outage_map = json.loads(response['Body'].read().decode('utf-8'))
-
-        # Check the map
-        is_outage = outage_map.get(user_zip, "false")
-        status_text = "there IS an active outage" if is_outage.lower() == "true" else "there are no outages"
-
-        # Match the Intent Name from your screenshot: ReportOutage
-        return jsonify({
-            "sessionState": {
-                "dialogAction": {"type": "Close"},
-                "intent": {
-                    "name": "ReportOutage", 
-                    "state": "Fulfilled"
-                }
+    # 3. Return the LEX V2 formatted response
+    return jsonify({
+        "sessionState": {
+            "dialogAction": {
+                "type": "Close"
             },
-            "messages": [
-                {
-                    "contentType": "PlainText",
-                    "content": f"For zip code {user_zip}, {status_text}."
-                }
-            ]
-        })
-    except Exception as e:
-        return jsonify({
-            "sessionState": {
-                "dialogAction": {"type": "Close"},
-                "intent": {"name": "ReportOutage", "state": "Failed"}
-            },
-            "messages": [{"contentType": "PlainText", "content": "Sorry, I can't check outages right now."}]
-        }), 200
+            "intent": {
+                "name": "ReportOutage",
+                "state": "Fulfilled"
+            }
+        },
+        "messages": [
+            {
+                "contentType": "PlainText",
+                "content": f"For zip code {user_zip}, {status_text}."
+            }
+        ]
+    })
 
-@app.route('/health')
-def health():
-    return "OK", 200
-
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # App Runner usually listens on 8080
     app.run(host='0.0.0.0', port=8080)
