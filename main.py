@@ -1,6 +1,6 @@
-from flask import Flask, request, json
+from flask import flask, request, json
 
-app = Flask(__name__)
+app = flask(__name__)
 
 # THIS IS THE PART AWS NEEDS TO SEE
 @app.route('/health')
