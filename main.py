@@ -21,7 +21,7 @@ def outage_check():
     else:
         response_text = f"There are no reported outages for the ZIP code {zip_code} at this time."
 
-    return jsonify({
+    return json({
         "sessionState": {
             "dialogAction": {
                 "type": "Close"
