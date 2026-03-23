@@ -9,18 +9,23 @@ s3 = boto3.client('s3')
 # Replace with your actual bucket name
 BUCKET_NAME = 'citygreen-outage-data-eina' 
 
+# 1. ADDED: Health check route for App Runner
+@app.route('/health', methods=['GET'])
+def health_check():
+    return "OK", 200
+
 @app.route('/', methods=['POST'])
 def handle_lex():
     data = request.get_json()
     
-    # 1. Grab the ZIP from the Lex V2 slot
+    # 2. Grab the ZIP from the Lex V2 slot
     try:
         slots = data['sessionState']['intent']['slots']
         user_zip = slots['zip_code']['value']['interpretedValue']
     except (KeyError, TypeError):
         user_zip = "Unknown"
 
-    # 2. Fetch the outage data from S3
+    # 3. Fetch the outage data from S3
     try:
         response = s3.get_object(Bucket=BUCKET_NAME, Key='outages.json')
         outages = json.loads(response['Body'].read().decode('utf-8'))
@@ -32,7 +37,7 @@ def handle_lex():
         print(f"Error: {e}")
         status_text = "we are having trouble checking our system right now"
 
-    # 3. Return the LEX V2 formatted response
+    # 4. Return the LEX V2 formatted response
     return jsonify({
         "sessionState": {
             "dialogAction": {
@@ -52,5 +57,5 @@ def handle_lex():
     })
 
 if __name__ == '__main__':
-    # App Runner usually listens on 8080
+    # Listen on port 8080 as required by App Runner
     app.run(host='0.0.0.0', port=8080)
