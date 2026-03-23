@@ -2,9 +2,15 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# THIS IS THE PART AWS NEEDS TO SEE
+@app.route('/health')
+def health_check():
+    return "OK", 200
+
 @app.route('/outage-check', methods=['POST'])
 def outage_check():
     data = request.json
+    
     # Extract the ZIP from the Lex V2 request structure
     slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
     zip_code = slots.get('ZipCode', {}).get('value', {}).get('interpretedValue')
@@ -35,5 +41,5 @@ def outage_check():
     })
 
 if __name__ == "__main__":
-    # App Runner uses port 8080 by default
+    # HOST MUST BE 0.0.0.0 AND PORT MUST BE 5000
     app.run(host='0.0.0.0', port=5000)
