@@ -36,4 +36,4 @@ def outage_check():
 
 if __name__ == "__main__":
     # App Runner uses port 8080 by default
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5000)
