@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . /app
 
 # This installs Flask so your main.py actually runs
-RUN pip3 install flask 
+RUN pip install flask 
 
 # This tells App Runner to listen on the correct port
 EXPOSE 8080
