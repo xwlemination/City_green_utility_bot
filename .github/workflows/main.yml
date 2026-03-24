@@ -8,3 +8,10 @@ run:
   command: python -m uvicorn main:app --host 0.0.0.0 --port 8000
   network:
     port: 8000
+  healthcheck:
+    protocol: http
+    path: /health
+    interval: 5
+    timeout: 2
+    healthyThreshold: 1
+    unhealthyThreshold: 3
