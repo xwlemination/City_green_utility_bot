@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Request
 
 app = FastAPI()
@@ -12,7 +13,6 @@ async def health():
 @app.post("/report-outage")
 async def report_outage(request: Request):
     data = await request.json()
-    
     try:
         slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
         zip_slot = slots.get('ZipCode') or {}
