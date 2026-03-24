@@ -1,0 +1,38 @@
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+@app.get("/health")
+async def health():
+    return {"status": "OK"}
+
+@app.post("/report-outage")
+async def report_outage(request: Request):
+    data = await request.json()
+    
+    try:
+        slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
+        zip_slot = slots.get('ZipCode') or {}
+        zip_val = zip_slot.get('value', {}).get('interpretedValue')
+
+        if zip_val == "90210":
+            res_text = "Confirmed. There is an active power outage in 90210. Crews are on-site."
+            report_outage_status = True
+        else:
+            res_text = f"There are no reported outages for the ZIP code {zip_val} at this time."
+            report_outage_status = False
+
+        return {
+            "sessionState": {
+                "dialogAction": {"type": "Close"},
+                "intent": {
+                    "name": data['sessionState']['intent']['name'],
+                    "slots": slots,
+                    "state": "Fulfilled"
+                }
+            },
+            "messages": [{"contentType": "PlainText", "content": res_text}],
+            "report_outage": report_outage_status
+        }
+    except Exception as e:
+        return {"messages": [{"contentType": "PlainText", "content": "Error."}]}
