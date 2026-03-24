@@ -6,6 +6,10 @@ from fastapi import FastAPI, Request
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"message": "Active"}
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
