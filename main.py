@@ -9,7 +9,6 @@ async def health():
 @app.post("/report-outage")
 async def report_outage(request: Request):
     data = await request.json()
-    print(f"DEBUG: {data}")
     
     try:
         slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
@@ -18,8 +17,10 @@ async def report_outage(request: Request):
 
         if zip_val == "90210":
             res_text = "Confirmed. There is an active power outage in 90210. Crews are on-site."
+            report_outage_status = True
         else:
             res_text = f"There are no reported outages for the ZIP code {zip_val} at this time."
+            report_outage_status = False
 
         return {
             "sessionState": {
@@ -30,7 +31,8 @@ async def report_outage(request: Request):
                     "state": "Fulfilled"
                 }
             },
-            "messages": [{"contentType": "PlainText", "content": res_text}]
+            "messages": [{"contentType": "PlainText", "content": res_text}],
+            "report_outage": report_outage_status
         }
     except Exception as e:
         return {"messages": [{"contentType": "PlainText", "content": "Error."}]}
