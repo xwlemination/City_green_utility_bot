@@ -3,11 +3,11 @@ from fastapi import FastAPI, Request
 app = FastAPI()
 
 @app.get("/health")
-async def health_check():
+async def health():
     return {"status": "OK"}
 
-@app.post("/outage-check")
-async def outage_check(request: Request):
+@app.post("/report-outage")
+async def report_outage(request: Request):
     data = await request.json()
     print(f"DEBUG: {data}")
     
@@ -33,5 +33,4 @@ async def outage_check(request: Request):
             "messages": [{"contentType": "PlainText", "content": res_text}]
         }
     except Exception as e:
-        print(f"ERROR: {e}")
-        return {"messages": [{"contentType": "PlainText", "content": "I encountered an error processing your request."}]}
+        return {"messages": [{"contentType": "PlainText", "content": "Error."}]}
