@@ -7,38 +7,43 @@ from fastapi import FastAPI, Request
 app = FastAPI()
 
 @app.get("/health")
-async def health():
-    return {"status": "OK"}
+def health_check():
+    return {"status": "healthy"}
 
-@app.post("/report-outage")
-async def report_outage(request: Request):
-    data = await request.json()
+@app.post("/lex")
+async def handle_lex(request: Request):
+    lex_event = await request.json()
+    
     try:
-        slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
-        zip_slot = slots.get('ZipCode') or {}
-        zip_val = zip_slot.get('value', {}).get('interpretedValue')
+        intent = lex_event['sessionState']['intent']['name']
+        zip_code = lex_event['sessionState']['intent']['slots']['service_zip']['value']['interpretedValue']
 
-        if zip_val == "90210":
-            res_text = "Confirmed. There is an active power outage in 90210. Crews are on-site."
-            report_outage_status = True
+        if intent == "ReportOutage" and zip_code == "90210":
+            is_outage_active = "true"
         else:
-            res_text = f"There are no reported outages for the ZIP code {zip_val} at this time."
-            report_outage_status = False
+            is_outage_active = "false"
 
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
-                "intent": {
-                    "name": data['sessionState']['intent']['name'],
-                    "slots": slots,
-                    "state": "Fulfilled"
-                }
+                "intent": {"name": intent, "state": "Fulfilled"}
             },
-            "messages": [{"contentType": "PlainText", "content": res_text}],
-            "report_outage": report_outage_status
+            "sessionAttributes": {
+                "service_zip": zip_code,
+                "is_outage": is_outage_active
+            }
         }
-    except Exception as e:
-        return {"messages": [{"contentType": "PlainText", "content": "Error."}]}
-        if __name__ == "__main__":
+
+    except (KeyError, TypeError):
+        return {
+            "sessionState": {
+                "dialogAction": {"type": "Close"},
+                "intent": {"name": "FallbackIntent", "state": "Failed"}
+            },
+            "sessionAttributes": {
+                "is_outage": "false",
+                "error_flag": "true"
+            }
+        }
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
