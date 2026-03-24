@@ -1,2 +1,5 @@
 version: 1.0
-runtime: python
+runtime: python3
+healthcheck:
+  protocol: http
+  path: /health
