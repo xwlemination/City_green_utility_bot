@@ -1,5 +1,0 @@
-version: 1.0
-runtime: python
-healthcheck:
-  protocol: http
-  path: /health
