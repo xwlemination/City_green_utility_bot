@@ -1,28 +1,27 @@
-import os 
-os.system ("python3 -m pip install flask")
-import flask
-import json
+from fastapi import FastAPI, Request
 
-app = flask.Flask(__name__)
+app = FastAPI()
 
-@app.route('/health')
-def health_check():
-    return "OK", 200
+@app.get("/health")
+async def health_check():
+    return {"status": "OK"}
 
-@app.route('/outage-check', methods=['POST'])
-def outage_check():
-    data = flask.request.get_json()
+@app.post("/outage-check")
+async def outage_check(request: Request):
+    data = await request.json()
+    print(f"DEBUG: {data}")
+    
     try:
         slots = data.get('sessionState', {}).get('intent', {}).get('slots', {})
-        zip_slot = slots.get('ZipCode', {}) or {}
+        zip_slot = slots.get('ZipCode') or {}
         zip_val = zip_slot.get('value', {}).get('interpretedValue')
 
         if zip_val == "90210":
-            res_text = "Confirmed: There is an active power outage in 90210. Crews are on-site."
+            res_text = "Confirmed. There is an active power outage in 90210. Crews are on-site."
         else:
             res_text = f"There are no reported outages for the ZIP code {zip_val} at this time."
 
-        response_body = {
+        return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
                 "intent": {
@@ -33,10 +32,6 @@ def outage_check():
             },
             "messages": [{"contentType": "PlainText", "content": res_text}]
         }
-        return flask.Response(json.dumps(response_body), mimetype='application/json')
-    except:
-        err = {"messages": [{"contentType": "PlainText", "content": "Error."}]}
-        return flask.Response(json.dumps(err), mimetype='application/json')
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {"messages": [{"contentType": "PlainText", "content": "I encountered an error processing your request."}]}
