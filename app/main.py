@@ -15,7 +15,6 @@ async def report_outage(request: Request):
         zip_slot = slots.get('ZipCode') or {}
         zip_val = zip_slot.get('value', {}).get('interpretedValue')
 
-        # Requirement: Use outage flag 90210
         if zip_val == "90210":
             res_text = "Confirmed. There is an active power outage in 90210. Crews are on-site."
             report_outage_status = True
