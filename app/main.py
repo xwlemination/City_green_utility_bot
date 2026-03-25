@@ -1,9 +1,11 @@
 import os
 import sys
 import boto3
+import uvicorn
 from fastapi import FastAPI, Request, UploadFile, File
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 app = FastAPI()
 s3 = boto3.client('s3')
 
@@ -29,11 +31,8 @@ async def handle_lex(request: Request):
         slots = lex_event['sessionState']['intent']['slots']
         zip_code = slots['service_zip']['value']['interpretedValue']
         
-        if intent == "Report Outage" and zip_code == "90210":
-            is_outage_active = "true"
-        else:
-            is_outage_active = "false"
-        
+        is_outage = "true" if intent == "Report Outage" and zip_code == "90210" else "false"
+            
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
@@ -41,7 +40,7 @@ async def handle_lex(request: Request):
             },
             "sessionAttributes": {
                 "service_zip": zip_code,
-                "is_outage": is_outage_active
+                "is_outage": is_outage
             }
         }
     except Exception:
@@ -50,12 +49,8 @@ async def handle_lex(request: Request):
                 "dialogAction": {"type": "Close"},
                 "intent": {"name": "FallbackIntent", "state": "Failed"}
             },
-            "sessionAttributes": {
-                "is_outage": "false",
-                "error_flag": "true"
-            }
+            "sessionAttributes": {"is_outage": "false", "error": "true"}
         }
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
