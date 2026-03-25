@@ -13,15 +13,12 @@ def health_check():
 @app.post("/lex")
 async def handle_lex(request: Request):
     lex_event = await request.json()
-    
     try:
         intent = lex_event['sessionState']['intent']['name']
-        zip_code = lex_event['sessionState']['intent']['slots']['service_zip']['value']['interpretedValue']
+        slots = lex_event['sessionState']['intent']['slots']
+        zip_code = slots['service_zip']['value']['interpretedValue']
 
-        if intent == "ReportOutage" and zip_code == "90210":
-            is_outage_active = "true"
-        else:
-            is_outage_active = "false"
+        is_outage_active = "true" if (intent == "ReportOutage" and zip_code == "90210") else "false"
 
         return {
             "sessionState": {
@@ -33,17 +30,13 @@ async def handle_lex(request: Request):
                 "is_outage": is_outage_active
             }
         }
-
-    except (KeyError, TypeError):
+    except Exception:
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
                 "intent": {"name": "FallbackIntent", "state": "Failed"}
             },
-            "sessionAttributes": {
-                "is_outage": "false",
-                "error_flag": "true"
-            }
+            "sessionAttributes": {"is_outage": "false", "error_flag": "true"}
         }
 
 if __name__ == "__main__":
