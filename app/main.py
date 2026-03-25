@@ -33,7 +33,9 @@ async def handle_lex(request: Request):
         
         outage_zips = ["90210", "12345", "55555"]
         is_outage = "true" if intent == "Report Outage" and zip_code in outage_zips else "false"
-            
+        if is_outage == "true":
+            report_data = f"Outage reported in {zip_code}"
+            s3.put_object(Bucket=BUCKET_NAME, Key=f"outage_{zip_code}.txt", Body=report_data)
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
