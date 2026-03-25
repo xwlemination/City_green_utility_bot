@@ -29,7 +29,7 @@ async def handle_lex(request: Request):
         slots = lex_event['sessionState']['intent']['slots']
         zip_code = slots['service_zip']['value']['interpretedValue']
         
-        if intent == "ReportOutage" and zip_code == "90210":
+        if intent == "Report Outage" and zip_code == "90210":
             is_outage_active = "true"
         else:
             is_outage_active = "false"
