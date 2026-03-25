@@ -31,7 +31,8 @@ async def handle_lex(request: Request):
         slots = lex_event['sessionState']['intent']['slots']
         zip_code = slots['service_zip']['value']['interpretedValue']
         
-        is_outage = "true" if intent == "Report Outage" and zip_code == "90210" else "false"
+        outage_zips = ["90210", "12345", "55555"]
+        is_outage = "true" if intent == "Report Outage" and zip_code in outage_zips else "false"
             
         return {
             "sessionState": {
