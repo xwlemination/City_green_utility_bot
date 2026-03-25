@@ -30,12 +30,14 @@ async def handle_lex(request: Request):
         intent = lex_event['sessionState']['intent']['name']
         slots = lex_event['sessionState']['intent']['slots']
         zip_code = slots['service_zip']['value']['interpretedValue']
-        
+
         outage_zips = ["90210", "12345", "55555"]
-        is_outage = "true" if intent == "Report Outage" and zip_code in outage_zips else "false"
-        if is_outage == "true":
+        report_outage = "true" if intent == "Report Outage" and zip_code in outage_zips else "false"
+
+        if report_outage == "true":
             report_data = f"Outage reported in {zip_code}"
             s3.put_object(Bucket=BUCKET_NAME, Key=f"outage_{zip_code}.txt", Body=report_data)
+
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
@@ -43,7 +45,7 @@ async def handle_lex(request: Request):
             },
             "sessionAttributes": {
                 "service_zip": zip_code,
-                "is_outage": is_outage
+                "report_outage": report_outage
             }
         }
     except Exception:
@@ -52,7 +54,7 @@ async def handle_lex(request: Request):
                 "dialogAction": {"type": "Close"},
                 "intent": {"name": "FallbackIntent", "state": "Failed"}
             },
-            "sessionAttributes": {"is_outage": "false", "error": "true"}
+            "sessionAttributes": {"report_outage": "false", "error": "true"}
         }
 
 if __name__ == "__main__":
