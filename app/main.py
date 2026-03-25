@@ -1,14 +1,25 @@
 import os
 import sys
+import boto3
+from fastapi import FastAPI, Request, UploadFile, File
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import FastAPI, Request
-
 app = FastAPI()
+s3 = boto3.client('s3')
+
+BUCKET_NAME = "citygreen-outage-data-eina-961341532793-us-east-1-an"
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.post("/upload")
+async def upload_recording(file: UploadFile = File(...)):
+    try:
+        s3.upload_fileobj(file.file, BUCKET_NAME, file.filename)
+        return {"message": "Upload successful"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/lex")
 async def handle_lex(request: Request):
@@ -17,9 +28,12 @@ async def handle_lex(request: Request):
         intent = lex_event['sessionState']['intent']['name']
         slots = lex_event['sessionState']['intent']['slots']
         zip_code = slots['service_zip']['value']['interpretedValue']
-
-        is_outage_active = "true" if (intent == "ReportOutage" and zip_code == "90210") else "false"
-
+        
+        if intent == "ReportOutage" and zip_code == "90210":
+            is_outage_active = "true"
+        else:
+            is_outage_active = "false"
+        
         return {
             "sessionState": {
                 "dialogAction": {"type": "Close"},
@@ -36,7 +50,10 @@ async def handle_lex(request: Request):
                 "dialogAction": {"type": "Close"},
                 "intent": {"name": "FallbackIntent", "state": "Failed"}
             },
-            "sessionAttributes": {"is_outage": "false", "error_flag": "true"}
+            "sessionAttributes": {
+                "is_outage": "false",
+                "error_flag": "true"
+            }
         }
 
 if __name__ == "__main__":
